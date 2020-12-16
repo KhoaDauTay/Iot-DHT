@@ -4,8 +4,9 @@
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 // Connect Wifi
-const char *ssid = "Khoa Cute 2.4Ghz";
-const char *password = "khoaban06";
+const char *ssid = "Greenwich-Student";
+const char *password = "12345678";
+String server = "https://iot-dashboard-khoa.herokuapp.com/api/node/1/";
 // Set up DHT Senor
 #define DHTPIN 5
 #define DHTTYPE DHT11
@@ -14,7 +15,7 @@ float t = 0.0;
 float h = 0.0;
 // Domain Name with full URL Path for HTTP PUT Request
 unsigned long lastTime = 0;
-unsigned long timerDelay = 5000;
+unsigned long timerDelay = 20000;
 
 void setup()
 {
@@ -36,6 +37,7 @@ void setup()
 
 void loop()
 {
+  
   //Send an HTTP POST request every 10 seconds
   if ((millis() - lastTime) > timerDelay)
   {
@@ -68,10 +70,11 @@ void loop()
       int temp = (int)t;
       int hum = (int)h;
 
-      String server = "https://iot-dashboard-khoa.herokuapp.com/api/node/1";
-      WiFiClient client;
       HTTPClient http;
-      http.begin(client ,server.c_str());
+      WiFiClientSecure client;
+      client.setInsecure(); //the magic line, use with caution
+      client.connect(server, 100); 
+      http.begin(client, server);
       http.addHeader("Content-Type", "application/json");
       String httpRequestData = "{ \"temperature\" : " + String(temp) + " , \"humidity\" : " + String(hum) + ", \"moisture\" : " + String(temp) + ", \"light\" : " + String(hum) + " }";
       Serial.println(httpRequestData);
@@ -81,15 +84,12 @@ void loop()
 
         Serial.print("HTTP Response code: ");
         Serial.println(httpResponseCode);
-        String payload = http.getString();
-        Serial.println(payload);
       }
       else
       {
 
-        Serial.print("Error on sending GET Request: ");
+        Serial.print("Error on sending PUT Request: ");
         Serial.println(httpResponseCode);
-        http.end();
       }
       http.end();
     }
